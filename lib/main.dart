@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:graphql/client.dart';
+import 'package:shopping_assistant_mobile_client/network/api_client.dart';
 
 void main() {
   runApp(const MyApp());
@@ -57,7 +60,8 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
 
-  void _incrementCounter() {
+  var client = ApiClient();
+  Future<void> _incrementCounter() async {
     setState(() {
       // This call to setState tells the Flutter framework that something has
       // changed in this State, which causes it to rerun the build method below
@@ -66,6 +70,35 @@ class _MyHomePageState extends State<MyHomePage> {
       // called again, and so nothing would appear to happen.
       _counter++;
     });
+
+    const String startPersonalWishlistMutations = r'''
+      mutation startPersonalWishlist($dto: WishlistCreateDtoInput!) {
+      startPersonalWishlist(dto: $dto) {
+        createdById, id, name, type
+      }
+    }
+    ''';
+
+    MutationOptions mutationOptions = MutationOptions(
+      document: gql(startPersonalWishlistMutations),
+      variables: const <String, dynamic>{
+        'dto': {
+          'firstMessageText': 'Gaming mechanical keyboard',
+          'type': 'Product'
+        },
+      }
+    );
+
+    var result = await client.mutate(mutationOptions);
+    print(jsonEncode(result));
+
+    var wishlistId = result?['startPersonalWishlist']['id'];
+    var sseStream = client.getServerSentEventStream(
+        'api/productssearch/search/$wishlistId',
+        {'text': 'silent wireless mouse'});
+    await for (var chunk in sseStream) {
+      print('${chunk.event}: ${chunk.data}');
+    }
   }
 
   @override
