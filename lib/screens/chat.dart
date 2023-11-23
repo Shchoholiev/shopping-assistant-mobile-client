@@ -1,135 +1,92 @@
-import 'dart:convert';
+// search_screen.dart
 
 import 'package:flutter/material.dart';
-import 'package:graphql_flutter/graphql_flutter.dart';
-import 'package:shopping_assistant_mobile_client/network/api_client.dart';
+import 'package:shopping_assistant_mobile_client/network/search_service.dart';
 
-const String startPersonalWishlistMutations = r'''
-  mutation startPersonalWishlist($dto: WishlistCreateDtoInput!) {
-    startPersonalWishlist(dto: $dto) {
-      createdById, id, name, type
-    }
-  }
-''';
+class Message {
+  final String text;
+  final bool isUser;
 
-const String sendMessageMutation = r'''
-  mutation sendMessage($wishlistId: ID!, $message: String!) {
-    sendMessage(wishlistId: $wishlistId, message: $message) {
-      // Опис того, що ви очікуєте від відповіді
-    }
-  }
-''';
-
-final ApiClient client = ApiClient();
-
-class ChatScreen extends StatefulWidget {
-  @override
-  State createState() => ChatScreenState();
+  Message({required this.text, this.isUser = false});
 }
 
 class MessageBubble extends StatelessWidget {
   final String message;
+  final bool isOutgoing;
 
-  MessageBubble({required this.message});
+  MessageBubble({required this.message, this.isOutgoing = true});
 
   @override
   Widget build(BuildContext context) {
     return Align(
-      alignment: Alignment.centerRight,
+      alignment: isOutgoing ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.all(8.0),
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
-          color: Colors.blue,
+          color: isOutgoing ? Colors.blue : Colors.white,
           borderRadius: BorderRadius.circular(10.0),
         ),
         child: Text(
           message,
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: isOutgoing ? Colors.white : Colors.black),
         ),
       ),
     );
   }
 }
 
-class ChatScreenState extends State<ChatScreen> {
+class ChatScreen extends StatefulWidget {
+  @override
+  State createState() => ChatScreenState();
+}
 
+class ChatScreenState extends State<ChatScreen> {
+  final SearchService _searchService = SearchService();
+  List<Message> messages = [];
   final TextEditingController _messageController = TextEditingController();
-  List<String> messages = [];
   bool buttonsVisible = true;
   final ScrollController _scrollController = ScrollController();
 
-
   String wishlistId = '';
 
-  // Функція для старту першої вішлісту при відправці першого повідомлення
-  Future<void> _startPersonalWishlist() async {
-    final options = MutationOptions(
-      document: gql(startPersonalWishlistMutations),
-      variables: <String, dynamic>{
-        'dto': {'firstMessageText': messages.first, 'type': 'Product'},
-      },
-    );
-
-    final result = await client.mutate(options);
-
-    if (result != null && result.containsKey('startPersonalWishlist')) {
-      setState(() {
-        wishlistId = result['startPersonalWishlist']['id'];
-      });
-    }
-  }
-
-  // Функція для відправки повідомлення до API
-  Future<void> _sendMessageToAPI(String message) async {
-    final options = MutationOptions(
-      document: gql(sendMessageMutation),
-      variables: <String, dynamic>{'wishlistId': wishlistId, 'message': message},
-    );
-
-    final result = await client.mutate(options);
-
-    // Обробка результатів відправки повідомлення
-    if (result != null && result.containsKey('sendMessage')) {
-      // Отримання та обробка відповідей з GPT-4
-      var sseStream = client.getServerSentEventStream(
-        'api/productssearch/search/$wishlistId',
-        {'text': message},
-      );
-
-      await for (var chunk in sseStream) {
-        print('${chunk.event}: ${chunk.data}');
-        // Оновлення UI або збереження результатів, якщо необхідно
-      }
-    }
-  }
-
-  // Функція для відправки повідомлення
-  void _sendMessage() {
-    String message = _messageController.text;
+  void _handleSSEMessage(Message message) {
     setState(() {
-      messages.insert(0, message);
+      messages.add(message);
+    });
+  }
+
+  Future<void> _startPersonalWishlist(String message) async {
+    await _searchService.initializeAuthenticationService();
+    await _searchService.startPersonalWishlist(message, _handleSSEMessage);
+  }
+
+  Future<void> _sendMessageToAPI(String message) async {
+    await _searchService.startPersonalWishlist(message, _handleSSEMessage);
+
+    setState(() {
+      messages.add(Message(text: message, isUser: true));
+    });
+  }
+
+  void _sendMessage() {
+    final message = _messageController.text;
+    setState(() {
+      messages.add(Message(text: message, isUser: true));
     });
 
     if (wishlistId.isEmpty) {
-      // Якщо вішліст не створено, стартуємо його
-      _startPersonalWishlist().then((_) {
-        // Після створення вішлісту, відправляємо перше повідомлення до API
-        _sendMessageToAPI(message);
-      });
+      _startPersonalWishlist(message);
     } else {
-      // Якщо вішліст вже існує, відправляємо повідомлення до API
       _sendMessageToAPI(message);
     }
 
     _messageController.clear();
     _scrollController.animateTo(
-      0.0,
+      _scrollController.position.maxScrollExtent,
       duration: Duration(milliseconds: 300),
       curve: Curves.easeOut,
-    );
-  }
-
+    );}
 
   void _showGiftNotAvailable() {
     showDialog(
@@ -156,11 +113,10 @@ class ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('New Chat'),
-        centerTitle: true, // Відцентрувати заголовок
+        centerTitle: true,
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
-            // Обробник для кнопки "Назад"
             print('Back button pressed');
           },
         ),
@@ -182,29 +138,28 @@ class ChatScreenState extends State<ChatScreen> {
                     children: <Widget>[
                       ElevatedButton(
                         onPressed: () {
-                          // Обробник для кнопки "Product"
                           print('Product button pressed');
                         },
                         style: ElevatedButton.styleFrom(
                           padding: EdgeInsets.symmetric(horizontal: 30, vertical: 16),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10), // Закруглення країв
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          primary: Colors.blue, // Колір кнопки
-                          onPrimary: Colors.white, // Колір тексту на активній кнопці
+                          primary: Colors.blue,
+                          onPrimary: Colors.white,
                         ),
                         child: Text('Product'),
                       ),
-                      SizedBox(width: 16.0), // Простір між кнопками
+                      SizedBox(width: 16.0),
                       ElevatedButton(
                         onPressed: _showGiftNotAvailable,
                         style: ElevatedButton.styleFrom(
                           padding: EdgeInsets.symmetric(horizontal: 30, vertical: 16),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10), // Закруглення країв
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          primary: Colors.white, // Колір кнопки "Gift"
-                          onPrimary: Colors.black, // Колір тексту на активній кнопці
+                          primary: Colors.white,
+                          onPrimary: Colors.black,
                         ),
                         child: Text('Gift'),
                       ),
@@ -215,16 +170,17 @@ class ChatScreenState extends State<ChatScreen> {
             ),
           ),
           Expanded(
-            child: ListView(
+            child: ListView.builder(
               controller: _scrollController,
-              reverse: true, // Щоб список був у зворотньому порядку
-              children: <Widget>[
-                // Повідомлення користувача
-                for (var message in messages)
-                  MessageBubble(
-                    message: message,
-                  ),
-              ],
+              reverse: false,
+              itemCount: messages.length,
+              itemBuilder: (context, index) {
+                final message = messages[index];
+                return MessageBubble(
+                  message: message.text,
+                  isOutgoing: message.isUser,
+                );
+              },
             ),
           ),
           Container(
@@ -250,4 +206,4 @@ class ChatScreenState extends State<ChatScreen> {
       ),
     );
   }
-  }
+}
