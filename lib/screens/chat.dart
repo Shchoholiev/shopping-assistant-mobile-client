@@ -24,7 +24,7 @@ class MessageBubble extends StatelessWidget {
         margin: const EdgeInsets.all(8.0),
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
-          color: isOutgoing ? Colors.blue : Colors.white,
+          color: isOutgoing ? Colors.blue : Colors.white38,
           borderRadius: BorderRadius.circular(10.0),
         ),
         child: Text(
@@ -50,6 +50,14 @@ class ChatScreenState extends State<ChatScreen> {
 
   String wishlistId = '';
 
+  @override
+  void initState() {
+    super.initState();
+    _searchService.sseStream.listen((event) {
+      _handleSSEMessage(Message(text: '${event.event}: ${event.data}'));
+    });
+  }
+
   void _handleSSEMessage(Message message) {
     setState(() {
       messages.add(message);
@@ -58,11 +66,11 @@ class ChatScreenState extends State<ChatScreen> {
 
   Future<void> _startPersonalWishlist(String message) async {
     await _searchService.initializeAuthenticationService();
-    await _searchService.startPersonalWishlist(message, _handleSSEMessage);
+    await _searchService.startPersonalWishlist(message);
   }
 
   Future<void> _sendMessageToAPI(String message) async {
-    await _searchService.startPersonalWishlist(message, _handleSSEMessage);
+    await _searchService.startPersonalWishlist(message);
 
     setState(() {
       messages.add(Message(text: message, isUser: true));
