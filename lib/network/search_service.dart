@@ -37,6 +37,29 @@ class SearchService {
 
   String? wishlistId;
 
+  Future<String?> generateNameForPersonalWishlist(String wishlistId) async {
+    final options = MutationOptions(
+      document: gql('''
+      mutation GenerateNameForPersonalWishlist(\$wishlistId: String!) {
+        generateNameForPersonalWishlist(wishlistId: \$wishlistId) {
+          id
+          name
+        }
+      }
+    '''),
+      variables: {'wishlistId': wishlistId},
+    );
+
+    final result = await client.mutate(options);
+
+    if (result != null && result.containsKey('generateNameForPersonalWishlist')) {
+      final name = result['generateNameForPersonalWishlist']['name'];
+      return name;
+    }
+
+    return null;
+  }
+
   Future<void> startPersonalWishlist(String message) async {
     await _authenticationService.initialize();
 

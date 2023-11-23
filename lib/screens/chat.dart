@@ -46,8 +46,8 @@ class MessageBubble extends StatelessWidget {
                   print('View Product button pressed');
                 },
                 style: ElevatedButton.styleFrom(
-                  primary: Colors.indigo,
-                  onPrimary: Colors.white,
+                    primary: Colors.indigo,
+                    onPrimary: Colors.white,
                     minimumSize: Size(300, 50)
                 ),
                 child: Text('View Product'),
@@ -72,11 +72,13 @@ class ChatScreenState extends State<ChatScreen> {
   bool isSendButtonEnabled = false;
   bool showButtonsContainer = true;
   final ScrollController _scrollController = ScrollController();
+  late Widget appBarTitle;
 
   String wishlistId = '';
 
   void initState() {
     super.initState();
+    appBarTitle = Text('New Chat');
     _searchService.sseStream.listen((event) {
       _handleSSEMessage(Message(text: '${event.data}'));
     });
@@ -100,6 +102,15 @@ class ChatScreenState extends State<ChatScreen> {
     _scrollToBottom();
   }
 
+  Future<void> updateChatTitle(String wishlistId) async {
+    final wishlistName = await _searchService.generateNameForPersonalWishlist(wishlistId);
+    if (wishlistName != null) {
+      setState(() {
+        // Оновіть назву чату з результатом методу generateNameForPersonalWishlist
+        appBarTitle = Text(wishlistName);
+      });
+    }
+  }
 
   Future<void> _startPersonalWishlist(String message) async {
     setState(() {
@@ -108,6 +119,7 @@ class ChatScreenState extends State<ChatScreen> {
     });
     await _searchService.initializeAuthenticationService();
     await _searchService.startPersonalWishlist(message);
+    updateChatTitle(_searchService.wishlistId.toString());
     _scrollToBottom();
   }
 
@@ -172,7 +184,7 @@ class ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('New Chat'),
+        title: appBarTitle,
         centerTitle: true,
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
