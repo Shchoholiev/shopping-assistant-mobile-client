@@ -17,6 +17,8 @@ const String startPersonalWishlistMutations = r'''
   }
 ''';
 
+SearchEventType type = SearchEventType.message;
+
 class SearchService {
   final AuthenticationService _authenticationService = AuthenticationService();
   final ApiClient client = ApiClient();
@@ -29,35 +31,52 @@ class SearchService {
     await _authenticationService.initialize();
   }
 
+  bool checkerForProduct() {
+    return type == SearchEventType.product;
+  }
+
+  String? wishlistId;
+
   Future<void> startPersonalWishlist(String message) async {
     await _authenticationService.initialize();
 
-    final options = MutationOptions(
-      document: gql(startPersonalWishlistMutations),
-      variables: <String, dynamic>{
-        'dto': {'firstMessageText': message, 'type': 'Product'},
-      },
-    );
+    // Перевіряємо, чи вже створений wishlist
+    if (wishlistId == null) {
+      final options = MutationOptions(
+        document: gql(startPersonalWishlistMutations),
+        variables: <String, dynamic>{
+          'dto': {'firstMessageText': message, 'type': 'Product'},
+        },
+      );
 
-    final result = await client.mutate(options);
+      final result = await client.mutate(options);
 
-    if (result != null && result.containsKey('startPersonalWishlist')) {
-      final wishlistId = result['startPersonalWishlist']['id'];
+      if (result != null && result.containsKey('startPersonalWishlist')) {
+        wishlistId = result['startPersonalWishlist']['id'];
+      }
+    }
+
+    if (wishlistId != null) {
       final sseStream = client.getServerSentEventStream(
         'api/productssearch/search/$wishlistId',
         {'text': message},
       );
 
-      StringBuffer fullMessage = StringBuffer(); // Використовуємо StringBuffer для зберігання повідомлення
-
       await for (final chunk in sseStream) {
-        fullMessage.write(chunk.data); // Додаємо чанк до повідомлення
+        print("Original chunk.data: ${chunk.event}");
+        final cleanedMessage = chunk.data.replaceAll(RegExp(r'(^"|"$)'), '');
+        if(chunk.event == SearchEventType.message)
+        {
+          type = SearchEventType.message;
+        }
+        if(chunk.event == SearchEventType.product)
+        {
+          type = SearchEventType.product;
+        }
+
+        final event = ServerSentEvent(type, cleanedMessage);
+        _sseController.add(event);
       }
-
-      final cleanedMessage = fullMessage.toString().replaceAll('"', '');
-
-      final event = ServerSentEvent(SearchEventType.message, cleanedMessage.toString().trim());
-      _sseController.add(event);
     }
   }
 }
