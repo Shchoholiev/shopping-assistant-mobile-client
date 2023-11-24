@@ -1,14 +1,15 @@
 // search_screen.dart
-
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:shopping_assistant_mobile_client/network/search_service.dart';
 
 class Message {
   final String text;
-  final bool isUser;
+  final String role;
   bool isProduct;
+  bool isSuggestion;
 
-  Message({required this.text, this.isUser = false, this.isProduct = false});
+  Message({required this.text, this.role = "", this.isProduct = false, this.isSuggestion = false});
 }
 
 class MessageBubble extends StatelessWidget {
@@ -71,6 +72,7 @@ class ChatScreenState extends State<ChatScreen> {
   bool buttonsVisible = true;
   bool isSendButtonEnabled = false;
   bool showButtonsContainer = true;
+  bool isWaitingForResponse = false;
   final ScrollController _scrollController = ScrollController();
   late Widget appBarTitle;
 
@@ -82,22 +84,57 @@ class ChatScreenState extends State<ChatScreen> {
     _searchService.sseStream.listen((event) {
       _handleSSEMessage(Message(text: '${event.data}'));
     });
+    Future.delayed(Duration(milliseconds: 2000));
+    if(!wishlistId.isEmpty)
+    {
+      _loadPreviousMessages();
+      showButtonsContainer = false;
+      buttonsVisible = false;
+    }
+  }
+
+  Future<void> _loadPreviousMessages() async {
+    final pageNumber = 1;
+    final pageSize = 200;
+    print('Previous Messages:');
+    try {
+      final previousMessages = await _searchService.getMessagesFromPersonalWishlist("6560b4c210686c50ed4b9fec", pageNumber, pageSize);
+      final reversedMessages = previousMessages.reversed.toList();
+      setState(() {
+        messages.addAll(reversedMessages);
+      });
+      print('Previous Messages: $previousMessages');
+
+      for(final message in messages)
+      {
+        print("MESSAGES TEXT: ${message.text}");
+        print("MESSAGES ROLE: ${message.role}");
+      }
+    } catch (error) {
+      print('Error loading previous messages: $error');
+    }
   }
 
   void _handleSSEMessage(Message message) {
     setState(() {
+      isWaitingForResponse = true;
       final lastMessage = messages.isNotEmpty ? messages.last : null;
       message.isProduct = _searchService.checkerForProduct();
+      message.isSuggestion = _searchService.checkerForSuggestion();
       print("Product status: ${message.isProduct}");
-      if (lastMessage != null && !lastMessage.isUser && !message.isUser) {
+      if (lastMessage != null && lastMessage.role != "User" && message.role != "User") {
         final updatedMessage = Message(
             text: "${lastMessage.text}${message.text}",
+            role: "Application",
             isProduct: message.isProduct);
         messages.removeLast();
         messages.add(updatedMessage);
       } else {
         messages.add(message);
       }
+    });
+    setState(() {
+      isWaitingForResponse = false;
     });
     _scrollToBottom();
   }
@@ -106,7 +143,6 @@ class ChatScreenState extends State<ChatScreen> {
     final wishlistName = await _searchService.generateNameForPersonalWishlist(wishlistId);
     if (wishlistName != null) {
       setState(() {
-        // Оновіть назву чату з результатом методу generateNameForPersonalWishlist
         appBarTitle = Text(wishlistName);
       });
     }
@@ -116,30 +152,35 @@ class ChatScreenState extends State<ChatScreen> {
     setState(() {
       buttonsVisible = false;
       showButtonsContainer = false;
+      isWaitingForResponse = true;
     });
-    await _searchService.initializeAuthenticationService();
-    await _searchService.startPersonalWishlist(message);
+    wishlistId = await _searchService.startPersonalWishlist(message);
     updateChatTitle(_searchService.wishlistId.toString());
     _scrollToBottom();
+
+    setState(() {
+      isWaitingForResponse = false;
+    });
   }
 
-  Future<void> _sendMessageToAPI(String message) async {
+  Future<void> _sendMessageToAPI(String message)async {
     setState(() {
       buttonsVisible = false;
       showButtonsContainer = false;
+      isWaitingForResponse = true;
     });
-    await _searchService.startPersonalWishlist(message);
+    await _searchService.sendMessages(message);
     _scrollToBottom();
 
     setState(() {
-      messages.add(Message(text: message, isUser: true));
+      isWaitingForResponse = false;
     });
   }
 
   void _sendMessage() {
     final message = _messageController.text;
     setState(() {
-      messages.add(Message(text: message, isUser: true));
+      messages.add(Message(text: message, role: "User"));
     });
 
     if (wishlistId.isEmpty) {
@@ -302,12 +343,36 @@ class ChatScreenState extends State<ChatScreen> {
                 final message = messages[index];
                 return MessageBubble(
                   message: message.text,
-                  isOutgoing: message.isUser,
+                  isOutgoing: message.role == "User",
                   isProduct: message.isProduct,
                 );
               },
             ),
           ),
+          if (isWaitingForResponse)
+            SpinKitFadingCircle(
+              color: Colors.blue,
+              size: 25.0,
+            ),
+          if (messages.any((message) => message.isSuggestion))
+            Container(
+              padding: EdgeInsets.all(8.0),
+              color: Colors.grey[300],
+              child: Row(
+                children: [
+                  Icon(Icons.lightbulb),
+                  SizedBox(width: 8.0),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: messages
+                        .where((message) => message.isSuggestion)
+                        .map((message) => Text(message.text))
+                        .toList(),
+                  ),
+                ],
+              ),
+            ),
+          // Поле введення повідомлень
           Container(
             margin: const EdgeInsets.all(8.0),
             child: Row(
@@ -316,7 +381,6 @@ class ChatScreenState extends State<ChatScreen> {
                   child: TextField(
                     controller: _messageController,
                     onChanged: (text) {
-                      // Коли текст змінюється, оновлюємо стан кнопки
                       setState(() {
                         isSendButtonEnabled = text.isNotEmpty;
                       });

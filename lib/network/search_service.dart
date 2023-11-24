@@ -1,13 +1,12 @@
 // search_service.dart
-
 import 'dart:async';
 
 import 'package:graphql_flutter/graphql_flutter.dart';
 import '../models/enums/search_event_type.dart';
 import '../models/server_sent_event.dart';
 import '../network/api_client.dart';
-import '../network/authentication_service.dart';
 import '../screens/chat.dart';
+import 'authentication_service.dart';
 
 const String startPersonalWishlistMutations = r'''
   mutation startPersonalWishlist($dto: WishlistCreateDtoInput!) {
@@ -20,18 +19,17 @@ const String startPersonalWishlistMutations = r'''
 SearchEventType type = SearchEventType.message;
 
 class SearchService {
-  final AuthenticationService _authenticationService = AuthenticationService();
   final ApiClient client = ApiClient();
 
-  final _sseController = StreamController<ServerSentEvent>();
+  late final _sseController = StreamController<ServerSentEvent>();
 
   Stream<ServerSentEvent> get sseStream => _sseController.stream;
 
-  Future<void> initializeAuthenticationService() async {
-    await _authenticationService.initialize();
+  bool checkerForProduct() {
+    return type == SearchEventType.product;
   }
 
-  bool checkerForProduct() {
+  bool checkerForSuggestion() {
     return type == SearchEventType.product;
   }
 
@@ -60,8 +58,7 @@ class SearchService {
     return null;
   }
 
-  Future<void> startPersonalWishlist(String message) async {
-    await _authenticationService.initialize();
+  Future<String> startPersonalWishlist(String message) async {
 
     // Перевіряємо, чи вже створений wishlist
     if (wishlistId == null) {
@@ -88,18 +85,76 @@ class SearchService {
       await for (final chunk in sseStream) {
         print("Original chunk.data: ${chunk.event}");
         final cleanedMessage = chunk.data.replaceAll(RegExp(r'(^"|"$)'), '');
-        if(chunk.event == SearchEventType.message)
-        {
-          type = SearchEventType.message;
-        }
-        if(chunk.event == SearchEventType.product)
-        {
-          type = SearchEventType.product;
-        }
 
         final event = ServerSentEvent(type, cleanedMessage);
         _sseController.add(event);
       }
     }
+    return wishlistId.toString();
+  }
+
+  Future<void> sendMessages(String message) async {
+
+    if (wishlistId != null) {
+      final sseStream = client.getServerSentEventStream(
+        'api/productssearch/search/$wishlistId',
+        {'text': message},
+      );
+
+      await for (final chunk in sseStream) {
+        print("Original chunk.data: ${chunk.event}");
+        final cleanedMessage = chunk.data.replaceAll(RegExp(r'(^"|"$)'), '');
+
+        final event = ServerSentEvent(chunk.event, cleanedMessage);
+        type = chunk.event;
+        _sseController.add(event);
+      }
+    }
+  }
+
+  Future<List<Message>> getMessagesFromPersonalWishlist(String wishlistIdPar, int pageNumber, int pageSize) async {
+    final options = QueryOptions(
+      document: gql('''
+        query MessagesPageFromPersonalWishlist(\$wishlistId: String!, \$pageNumber: Int!, \$pageSize: Int!) {
+          messagesPageFromPersonalWishlist(wishlistId: \$wishlistId, pageNumber: \$pageNumber, pageSize: \$pageSize) {
+            items {
+              id
+              text
+              role
+              createdById
+            }
+          }
+        }
+      '''),
+      variables: {
+        'wishlistId': wishlistIdPar,
+        'pageNumber': pageNumber,
+        'pageSize': pageSize,
+      },
+    );
+
+    print("DOCUMENT: ${options.document}");
+
+    final result = await client.query(options);
+
+    print("RESULT: ${result}");
+    print(result);
+    if (result != null &&
+        result.containsKey('messagesPageFromPersonalWishlist') &&
+        result['messagesPageFromPersonalWishlist'] != null &&
+        result['messagesPageFromPersonalWishlist']['items'] != null) {
+      final List<dynamic> items = result['messagesPageFromPersonalWishlist']['items'];
+
+      final List<Message> messages = items.map((item) {
+        return Message(
+          text: item['text'],
+          role: item['role'],
+          isProduct: false,
+        );
+      }).toList();
+
+      return messages;
+    }
+    return [];
   }
 }
