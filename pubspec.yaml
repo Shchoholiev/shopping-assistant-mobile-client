@@ -41,6 +41,7 @@ dependencies:
   shared_preferences: ^2.2.2
   uuid: ^3.0.7
   graphql_flutter: ^5.2.0-beta.6
+  flutter_svg: ^2.0.9
 
 dev_dependencies:
   flutter_test:
@@ -65,9 +66,12 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - assets/icons/cart.svg
+    - assets/icons/trash.svg
+    - assets/icons/wishlists.svg
+    - assets/icons/start-new-search.svg
+    - assets/icons/settings.svg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
