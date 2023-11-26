@@ -106,6 +106,7 @@ class _MyAppState extends State<MyApp> {
 }
 
 // Use to seed wishlists for new user
+// final ApiClient client = ApiClient();
 
 // const String startPersonalWishlistMutations = r'''
 //   mutation startPersonalWishlist($dto: WishlistCreateDtoInput!) {
