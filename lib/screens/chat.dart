@@ -1,6 +1,7 @@
 // search_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:logger/logger.dart';
 import 'package:shopping_assistant_mobile_client/network/search_service.dart';
 
 class Message {
@@ -27,7 +28,7 @@ class MessageBubble extends StatelessWidget {
         margin: const EdgeInsets.all(8.0),
         padding: const EdgeInsets.all(16.0),
         constraints: BoxConstraints(
-          maxWidth: 300.0, // Максимальна ширина контейнера
+          maxWidth: 300.0,
         ),
         decoration: BoxDecoration(
           color: isOutgoing ? Colors.blue : Colors.grey[200],
@@ -40,10 +41,9 @@ class MessageBubble extends StatelessWidget {
               message,
               style: TextStyle(color: isOutgoing ? Colors.white : Colors.black),
             ),
-            if (isProduct) // Виводимо кнопку тільки для повідомлень типу Product
+            if (isProduct)
               ElevatedButton(
                 onPressed: () {
-                  // Обробка натискання на кнопку "View Product"
                   print('View Product button pressed');
                 },
                 style: ElevatedButton.styleFrom(
@@ -66,6 +66,7 @@ class ChatScreen extends StatefulWidget {
 }
 
 class ChatScreenState extends State<ChatScreen> {
+  var logger = Logger();
   final SearchService _searchService = SearchService();
   List<Message> messages = [];
   final TextEditingController _messageController = TextEditingController();
@@ -96,22 +97,21 @@ class ChatScreenState extends State<ChatScreen> {
   Future<void> _loadPreviousMessages() async {
     final pageNumber = 1;
     final pageSize = 200;
-    print('Previous Messages:');
     try {
       final previousMessages = await _searchService.getMessagesFromPersonalWishlist("6560b4c210686c50ed4b9fec", pageNumber, pageSize);
       final reversedMessages = previousMessages.reversed.toList();
       setState(() {
         messages.addAll(reversedMessages);
       });
-      print('Previous Messages: $previousMessages');
+      logger.d('Previous Messages: $previousMessages');
 
       for(final message in messages)
       {
-        print("MESSAGES TEXT: ${message.text}");
-        print("MESSAGES ROLE: ${message.role}");
+        logger.d("MESSAGES TEXT: ${message.text}");
+        logger.d("MESSAGES ROLE: ${message.role}");
       }
     } catch (error) {
-      print('Error loading previous messages: $error');
+      logger.d('Error loading previous messages: $error');
     }
   }
 
@@ -121,7 +121,7 @@ class ChatScreenState extends State<ChatScreen> {
       final lastMessage = messages.isNotEmpty ? messages.last : null;
       message.isProduct = _searchService.checkerForProduct();
       message.isSuggestion = _searchService.checkerForSuggestion();
-      print("Product status: ${message.isProduct}");
+      logger.d("Product status: ${message.isProduct}");
       if (lastMessage != null && lastMessage.role != "User" && message.role != "User") {
         final updatedMessage = Message(
             text: "${lastMessage.text}${message.text}",
@@ -155,7 +155,8 @@ class ChatScreenState extends State<ChatScreen> {
       isWaitingForResponse = true;
     });
     wishlistId = await _searchService.startPersonalWishlist(message);
-    updateChatTitle(_searchService.wishlistId.toString());
+    await _sendMessageToAPI(message);
+    await updateChatTitle(_searchService.wishlistId.toString());
     _scrollToBottom();
 
     setState(() {
@@ -179,13 +180,17 @@ class ChatScreenState extends State<ChatScreen> {
 
   void _sendMessage() {
     final message = _messageController.text;
-    setState(() {
-      messages.add(Message(text: message, role: "User"));
-    });
 
     if (wishlistId.isEmpty) {
+      setState(() {
+        messages.add(Message(text: "What are you looking for?", role: "Application"));
+        messages.add(Message(text: message, role: "User"));
+      });
       _startPersonalWishlist(message);
     } else {
+      setState(() {
+        messages.add(Message(text: message, role: "User"));
+      });
       _sendMessageToAPI(message);
     }
 
@@ -284,7 +289,7 @@ class ChatScreenState extends State<ChatScreen> {
               ),
             ),
           ),
-          SizedBox(height: 16.0), // Відступ вниз
+          SizedBox(height: 16.0),
           Visibility(
             visible: showButtonsContainer,
             child: Container(
@@ -372,7 +377,6 @@ class ChatScreenState extends State<ChatScreen> {
                 ],
               ),
             ),
-          // Поле введення повідомлень
           Container(
             margin: const EdgeInsets.all(8.0),
             child: Row(

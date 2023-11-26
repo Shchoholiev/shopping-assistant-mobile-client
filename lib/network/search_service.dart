@@ -1,12 +1,11 @@
 // search_service.dart
 import 'dart:async';
-
+import 'package:logger/logger.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import '../models/enums/search_event_type.dart';
 import '../models/server_sent_event.dart';
 import '../network/api_client.dart';
 import '../screens/chat.dart';
-import 'authentication_service.dart';
 
 const String startPersonalWishlistMutations = r'''
   mutation startPersonalWishlist($dto: WishlistCreateDtoInput!) {
@@ -15,6 +14,8 @@ const String startPersonalWishlistMutations = r'''
     }
   }
 ''';
+
+var logger = Logger();
 
 SearchEventType type = SearchEventType.message;
 
@@ -60,12 +61,11 @@ class SearchService {
 
   Future<String> startPersonalWishlist(String message) async {
 
-    // Перевіряємо, чи вже створений wishlist
     if (wishlistId == null) {
       final options = MutationOptions(
         document: gql(startPersonalWishlistMutations),
         variables: <String, dynamic>{
-          'dto': {'firstMessageText': message, 'type': 'Product'},
+          'dto': {'firstMessageText': "What are you looking for?", 'type': 'Product'},
         },
       );
 
@@ -73,21 +73,6 @@ class SearchService {
 
       if (result != null && result.containsKey('startPersonalWishlist')) {
         wishlistId = result['startPersonalWishlist']['id'];
-      }
-    }
-
-    if (wishlistId != null) {
-      final sseStream = client.getServerSentEventStream(
-        'api/productssearch/search/$wishlistId',
-        {'text': message},
-      );
-
-      await for (final chunk in sseStream) {
-        print("Original chunk.data: ${chunk.event}");
-        final cleanedMessage = chunk.data.replaceAll(RegExp(r'(^"|"$)'), '');
-
-        final event = ServerSentEvent(type, cleanedMessage);
-        _sseController.add(event);
       }
     }
     return wishlistId.toString();
@@ -133,7 +118,7 @@ class SearchService {
       },
     );
 
-    print("DOCUMENT: ${options.document}");
+    logger.d("DOCUMENT: ${options.document}");
 
     final result = await client.query(options);
 
