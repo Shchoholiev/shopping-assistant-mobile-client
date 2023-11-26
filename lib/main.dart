@@ -2,10 +2,12 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:graphql/client.dart';
 import 'package:shopping_assistant_mobile_client/network/api_client.dart';
+import 'package:shopping_assistant_mobile_client/screens/chat.dart';
 
 void main() {
   runApp(const MyApp());
 }
+final ApiClient client = ApiClient();
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -34,7 +36,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: ChatScreen(),
     );
   }
 }
@@ -80,13 +82,13 @@ class _MyHomePageState extends State<MyHomePage> {
     ''';
 
     MutationOptions mutationOptions = MutationOptions(
-      document: gql(startPersonalWishlistMutations),
-      variables: const <String, dynamic>{
-        'dto': {
-          'firstMessageText': 'Gaming mechanical keyboard',
-          'type': 'Product'
-        },
-      }
+        document: gql(startPersonalWishlistMutations),
+        variables: const <String, dynamic>{
+          'dto': {
+            'firstMessageText': 'Gaming mechanical keyboard',
+            'type': 'Product'
+          },
+        }
     );
 
     var result = await client.mutate(mutationOptions);

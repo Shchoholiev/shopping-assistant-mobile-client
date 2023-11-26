@@ -12,11 +12,8 @@ class AuthenticationService {
 
   late SharedPreferences prefs;
 
-  AuthenticationService() {
-    SharedPreferences.getInstance().then((result) => {prefs = result});
-  }
-
   Future<String> getAccessToken() async {
+    prefs = await SharedPreferences.getInstance();
     var accessToken = prefs.getString('accessToken');
     var refreshToken = prefs.getString('refreshToken');
 
