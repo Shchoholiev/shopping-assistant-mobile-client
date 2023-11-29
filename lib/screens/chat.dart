@@ -39,7 +39,9 @@ class MessageBubble extends StatelessWidget {
           children: [
             Text(
               message,
-              style: TextStyle(color: isOutgoing ? Colors.white : Colors.black),
+              style: TextStyle(color: isOutgoing ? Colors.white : Colors.black,
+                  fontSize: 18.0
+              ),
             ),
             if (isProduct)
               ElevatedButton(
@@ -81,7 +83,7 @@ class ChatScreenState extends State<ChatScreen> {
 
   void initState() {
     super.initState();
-    appBarTitle = Text('New Chat');
+    appBarTitle = Text('New Chat', style: TextStyle(fontSize: 18.0));
     _searchService.sseStream.listen((event) {
       _handleSSEMessage(Message(text: '${event.data}'));
     });
@@ -143,7 +145,7 @@ class ChatScreenState extends State<ChatScreen> {
     final wishlistName = await _searchService.generateNameForPersonalWishlist(wishlistId);
     if (wishlistName != null) {
       setState(() {
-        appBarTitle = Text(wishlistName);
+        appBarTitle = Text(wishlistName, style: TextStyle(fontSize: 18.0));
       });
     }
   }
@@ -248,7 +250,7 @@ class ChatScreenState extends State<ChatScreen> {
               child: Column(
                 children: [
                   Text(
-                    'Choose an Option',
+                    'What are you looking for?',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   Row(
@@ -391,6 +393,7 @@ class ChatScreenState extends State<ChatScreen> {
                     },
                     decoration: InputDecoration(
                       hintText: 'Enter your message...',
+                        contentPadding: EdgeInsets.symmetric(vertical: 20.0)
                     ),
                   ),
                 ),
