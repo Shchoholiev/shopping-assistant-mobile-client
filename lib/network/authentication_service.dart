@@ -20,10 +20,10 @@ class AuthenticationService {
     if (accessToken == null && refreshToken != null) {
       print('WTF??');
     } else if (accessToken == null && refreshToken == null) {
-      accessToken = await accessGuest();
+      accessToken = await _accessGuest();
       print('Got new access token $accessToken');
     } else if (JwtDecoder.isExpired(accessToken!)) {
-      accessToken = await refreshAccessToken();
+      accessToken = await _refreshAccessToken();
       print('Refreshed access token $accessToken');
     }
 
@@ -32,6 +32,7 @@ class AuthenticationService {
   }
 
   Future login(String? email, String? phone, String password) async {
+    prefs = await SharedPreferences.getInstance();
     const String loginQuery = r'''
       mutation Login($login: AccessUserModelInput!) {
         login(login: $login) {
@@ -65,7 +66,8 @@ class AuthenticationService {
     prefs.setString('refreshToken', refreshToken);
   }
 
-  Future<String> accessGuest() async {
+  Future<String> _accessGuest() async {
+    prefs = await SharedPreferences.getInstance();
     String? guestId = prefs.getString('guestId');
     guestId ??= const Uuid().v4();
     prefs.setString('guestId', guestId);
@@ -103,7 +105,7 @@ class AuthenticationService {
     return accessToken;
   }
 
-  Future<String> refreshAccessToken() async {
+  Future<String> _refreshAccessToken() async {
     var accessToken = prefs.getString('accessToken');
     var refreshToken = prefs.getString('refreshToken');
 
