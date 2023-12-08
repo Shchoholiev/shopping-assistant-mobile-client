@@ -4,6 +4,8 @@ import 'package:graphql/client.dart';
 import 'package:shopping_assistant_mobile_client/models/wishlist.dart';
 import 'package:shopping_assistant_mobile_client/network/api_client.dart';
 
+import 'chat.dart';
+
 class WishlistsScreen extends StatefulWidget {
   const WishlistsScreen({super.key});
 
@@ -211,16 +213,20 @@ class _WishlistItemState extends State<WishlistItem> {
           ),
           Positioned(
             child: GestureDetector(
-              onTap: () => print(Navigator.push(
+              onTap: () {
+                Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) =>
-                          Text('Chat ' + widget._wishlist.id)))),
-              onHorizontalDragUpdate: (DragUpdateDetails details) => {
-                if (details.delta.dx < -1)
-                  {_transformLeft()}
-                else if (details.delta.dx > 1)
-                  {_transformRight()}
+                    builder: (context) => ChatScreen(wishlistId: widget._wishlist.id, wishlistName: widget._wishlist.name),
+                  ),
+                );
+              },
+              onHorizontalDragUpdate: (DragUpdateDetails details) {
+                if (details.delta.dx < -1) {
+                  _transformLeft();
+                } else if (details.delta.dx > 1) {
+                  _transformRight();
+                }
               },
               child: AnimatedContainer(
                 transform: Matrix4.translationValues(_xOffset, 0, 0),

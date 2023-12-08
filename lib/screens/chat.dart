@@ -63,6 +63,11 @@ class MessageBubble extends StatelessWidget {
 }
 
 class ChatScreen extends StatefulWidget {
+  String wishlistId;
+  String wishlistName;
+
+  ChatScreen({Key? key, required this.wishlistId, required this.wishlistName}) : super(key: key);
+
   @override
   State createState() => ChatScreenState();
 }
@@ -79,8 +84,6 @@ class ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
   late Widget appBarTitle;
 
-  String wishlistId = '';
-
   void initState() {
     super.initState();
     appBarTitle = Text('New Chat', style: TextStyle(fontSize: 18.0));
@@ -88,7 +91,7 @@ class ChatScreenState extends State<ChatScreen> {
       _handleSSEMessage(Message(text: '${event.data}'));
     });
     Future.delayed(Duration(milliseconds: 2000));
-    if(!wishlistId.isEmpty)
+    if(!widget.wishlistId.isEmpty)
     {
       _loadPreviousMessages();
       showButtonsContainer = false;
@@ -99,8 +102,9 @@ class ChatScreenState extends State<ChatScreen> {
   Future<void> _loadPreviousMessages() async {
     final pageNumber = 1;
     final pageSize = 200;
+    appBarTitle = Text(widget.wishlistName, style: TextStyle(fontSize: 18.0));
     try {
-      final previousMessages = await _searchService.getMessagesFromPersonalWishlist("6560b4c210686c50ed4b9fec", pageNumber, pageSize);
+      final previousMessages = await _searchService.getMessagesFromPersonalWishlist(widget.wishlistId, pageNumber, pageSize);
       final reversedMessages = previousMessages.reversed.toList();
       setState(() {
         messages.addAll(reversedMessages);
@@ -156,7 +160,7 @@ class ChatScreenState extends State<ChatScreen> {
       showButtonsContainer = false;
       isWaitingForResponse = true;
     });
-    wishlistId = await _searchService.startPersonalWishlist(message);
+    widget.wishlistId = await _searchService.startPersonalWishlist(message);
     await _sendMessageToAPI(message);
     await updateChatTitle(_searchService.wishlistId.toString());
     _scrollToBottom();
@@ -183,7 +187,7 @@ class ChatScreenState extends State<ChatScreen> {
   void _sendMessage() {
     final message = _messageController.text;
 
-    if (wishlistId.isEmpty) {
+    if (widget.wishlistId.isEmpty) {
       setState(() {
         messages.add(Message(text: "What are you looking for?", role: "Application"));
         messages.add(Message(text: message, role: "User"));
