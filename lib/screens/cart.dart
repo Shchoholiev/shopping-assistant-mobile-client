@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:graphql/client.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:shopping_assistant_mobile_client/models/product.dart';
 import 'package:shopping_assistant_mobile_client/network/api_client.dart';
 
@@ -8,13 +9,16 @@ const String defaultUrl = 'https://s3-alpha-sig.figma.com/img/b8d6/7b6f/59839f0f
 
 
 class CartScreen extends StatefulWidget {
-  const CartScreen({super.key});
+  CartScreen({super.key, required this.wishlistId});
+
+  final String wishlistId;
 
   @override
-  State<CartScreen> createState() => _CartScreenState();
+  State<CartScreen> createState() => _CartScreenState(wishlistId: wishlistId);
 }
 
 class _CartScreenState extends State<CartScreen> {
+  _CartScreenState({required this.wishlistId});
   // final _products = [
   //   Product(name : '1', id: "Belkin USB C to VGA + Charge Adapter - USB C to VGA Cable for MacBook", price: 12.57, rating: 4.34, url: 'a', imageUrls: [defaultUrl,'a','b']),
   //   Product(id : '1', name: "USB C to VGA 2", price: 12.57, rating: 4.5, url: 'a', imageUrls: [defaultUrl,'a','b']),
@@ -24,6 +28,8 @@ class _CartScreenState extends State<CartScreen> {
   // ];
 
   var client = ApiClient();
+
+  final String wishlistId;
 
   late Future _productsFuture;
   late List<Product> _products;
@@ -55,8 +61,8 @@ class _CartScreenState extends State<CartScreen> {
 
     QueryOptions queryOptions = QueryOptions(
         document: gql(productsPageFromPersonalWishlistQuery),
-        variables: const <String, dynamic>{
-          'wishlistId': "657310c6892da98a23091bdf",
+        variables: <String, dynamic>{
+          'wishlistId': wishlistId,
           'pageNumber': 1,
           'pageSize': 10,
         });
@@ -92,17 +98,19 @@ class _CartScreenState extends State<CartScreen> {
             leading: IconButton(
               icon: Icon(Icons.arrow_back),
               onPressed: () {
-                print('Back button pressed');
+                Navigator.pop(context);
               },
             ),
           ),
-          body: ListView.builder(
+          body: _products.length == 0 ?
+            Center(child: Text("The cart is empty", style: TextStyle(fontSize: 18),),)
+            : ListView.builder(
               padding: EdgeInsets.symmetric(vertical: 30),
               itemCount: _products.length,
               itemBuilder: (context, index){
                 return CartItem(product: _products[index]);
               }
-          ),
+            ),
           backgroundColor: Colors.white,
         );
       };
@@ -112,28 +120,6 @@ class _CartScreenState extends State<CartScreen> {
       );
     }
     );
-    // return Scaffold(
-    //   appBar: AppBar(
-    //     title: Text("Cart"),
-    //     centerTitle: true,
-    //     //titleTextStyle: TextStyle(color: Colors.black),
-    //     //backgroundColor: ,
-    //     leading: IconButton(
-    //       icon: Icon(Icons.arrow_back),
-    //       onPressed: () {
-    //         print('Back button pressed');
-    //       },
-    //     ),
-    //   ),
-    //   body: ListView.builder(
-    //     padding: EdgeInsets.symmetric(vertical: 30),
-    //     itemCount: _products.length,
-    //     itemBuilder: (context, index){
-    //       return CartItem(product: _products[index]);
-    //     }
-    //   ),
-    //   backgroundColor: Colors.white,
-    // );
   }
 }
 
@@ -169,6 +155,12 @@ class CartItem extends StatelessWidget{
       stars.add(_buildRatingStar(i));
     }
     return stars;
+  }
+
+
+  Future<void> _launchUrl(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri)) throw 'Could not launch $url';
   }
 
   @override
@@ -225,7 +217,7 @@ class CartItem extends StatelessWidget{
                     width: double.infinity,
                     height: 35,
                     child: ElevatedButton.icon(
-                      onPressed: ()=>{},
+                      onPressed: () => _launchUrl(_product.url),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue,// Блакитний колір фону кнопки
                         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),

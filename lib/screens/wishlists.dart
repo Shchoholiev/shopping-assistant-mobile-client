@@ -3,6 +3,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:graphql/client.dart';
 import 'package:shopping_assistant_mobile_client/models/wishlist.dart';
 import 'package:shopping_assistant_mobile_client/network/api_client.dart';
+import 'package:shopping_assistant_mobile_client/screens/cart.dart';
 
 class WishlistsScreen extends StatefulWidget {
   const WishlistsScreen({super.key});
@@ -258,7 +259,7 @@ class _WishlistItemState extends State<WishlistItem> {
                           context,
                           MaterialPageRoute(
                               builder: (context) =>
-                                  Text('Cart ' + widget._wishlist.id)))),
+                                  CartScreen(wishlistId: widget._wishlist.id)))),
                       behavior: HitTestBehavior.opaque,
                       child: Container(
                         padding: EdgeInsets.symmetric(
