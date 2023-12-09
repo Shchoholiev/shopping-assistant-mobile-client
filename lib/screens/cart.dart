@@ -5,8 +5,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:shopping_assistant_mobile_client/models/product.dart';
 import 'package:shopping_assistant_mobile_client/network/api_client.dart';
 
-const String defaultUrl = 'https://s3-alpha-sig.figma.com/img/b8d6/7b6f/59839f0f3abfdeed91ca32d3501cbfa3?Expires=1702252800&Signature=aDWc2xO9d01Criwp829ZjhWE1pu~XGezZiM9oNOGkVZOYyGwxfDq5lVOSV0WOEkYdBR83hW7a-I2LY-U5R9evtoKf0BRGY1VVZ0H1wkp5WOHlC196gKr5tLPfseWahP2GWsQNSxfsgxg0cg8l8LamgqS1sUmD1Qt8jWdsqVcwlvTBY8X0q~ScDeCGn1n-7Npj315r4CbVLYMLfZWjpXROcR~Jpx-sqKVaxakw5OWdjegw7YBn~MAY6~yNi~Ylf44oFLkBpzI2aA65Z-TiRMPJ7HoLqJ3id8Eq7NoJ2PKxL88aZ2cOk9ZduRU7jI8FO-PvEBT-Qiwz0tUyEzmbiziDg__&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4';
-
 
 class CartScreen extends StatefulWidget {
   CartScreen({super.key, required this.wishlistId});
@@ -19,13 +17,6 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> {
   _CartScreenState({required this.wishlistId});
-  // final _products = [
-  //   Product(name : '1', id: "Belkin USB C to VGA + Charge Adapter - USB C to VGA Cable for MacBook", price: 12.57, rating: 4.34, url: 'a', imageUrls: [defaultUrl,'a','b']),
-  //   Product(id : '1', name: "USB C to VGA 2", price: 12.57, rating: 4.5, url: 'a', imageUrls: [defaultUrl,'a','b']),
-  //   Product(id : '1', name: "USB C to VGA 2", price: 12.57, rating: 4.2, url: 'a', imageUrls: [defaultUrl,'a','b']),
-  //   Product(id : '1', name: "USB C to VGA 2", price: 12.57, rating: 4.7, url: 'a', imageUrls: [defaultUrl,'a','b']),
-  //   Product(id : '1', name: "USB C to VGA 2", price: 12.57, rating: 4.8, url: 'a', imageUrls: [defaultUrl,'a','b'])
-  // ];
 
   var client = ApiClient();
 
@@ -93,8 +84,6 @@ class _CartScreenState extends State<CartScreen> {
           appBar: AppBar(
             title: Text("Cart"),
             centerTitle: true,
-            //titleTextStyle: TextStyle(color: Colors.black),
-            //backgroundColor: ,
             leading: IconButton(
               icon: Icon(Icons.arrow_back),
               onPressed: () {
@@ -219,14 +208,13 @@ class CartItem extends StatelessWidget{
                     child: ElevatedButton.icon(
                       onPressed: () => _launchUrl(_product.url),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,// Блакитний колір фону кнопки
+                        backgroundColor: Colors.blue,
                         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       ),
                       icon: SvgPicture.asset("../assets/icons/amazon.svg", height: 15),
                       label: Text(""),
                     ),
                   )
-
                 ],
               )
           )
