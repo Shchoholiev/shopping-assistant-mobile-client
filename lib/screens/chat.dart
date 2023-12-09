@@ -38,7 +38,7 @@ class MessageBubble extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              message,
+              message.trim(),
               style: TextStyle(color: isOutgoing ? Colors.white : Colors.black,
                   fontSize: 18.0
               ),
@@ -127,6 +127,7 @@ class ChatScreenState extends State<ChatScreen> {
       final lastMessage = messages.isNotEmpty ? messages.last : null;
       message.isProduct = _searchService.checkerForProduct();
       message.isSuggestion = _searchService.checkerForSuggestion();
+      bool checker = false;
       logger.d("Product status: ${message.isProduct}");
       if (lastMessage != null && lastMessage.role != "User" && message.role != "User") {
         final updatedMessage = Message(
@@ -388,16 +389,19 @@ class ChatScreenState extends State<ChatScreen> {
             child: Row(
               children: <Widget>[
                 Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    onChanged: (text) {
-                      setState(() {
-                        isSendButtonEnabled = text.isNotEmpty;
-                      });
-                    },
-                    decoration: InputDecoration(
-                      hintText: 'Enter your message...',
-                        contentPadding: EdgeInsets.symmetric(vertical: 20.0)
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 15.0), // Adjust the left padding as needed
+                    child: TextField(
+                      controller: _messageController,
+                      onChanged: (text) {
+                        setState(() {
+                          isSendButtonEnabled = text.isNotEmpty;
+                        });
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Enter your message...',
+                        contentPadding: EdgeInsets.symmetric(vertical: 20.0),
+                      ),
                     ),
                   ),
                 ),
