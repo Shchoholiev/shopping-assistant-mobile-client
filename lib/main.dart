@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:shopping_assistant_mobile_client/screens/chat.dart';
 import 'package:shopping_assistant_mobile_client/screens/wishlists.dart';
 
 void main() {
@@ -15,9 +16,9 @@ class MyApp extends StatefulWidget {
     'Settings',
   ];
 
-  static const List<Widget> _widgetOptions = <Widget>[
+  static List<Widget> _widgetOptions = <Widget>[
     WishlistsScreen(),
-    Text(''),
+    ChatScreen(wishlistId: '', wishlistName: 'New Chat',),
     Text(''),
   ];
 
@@ -37,6 +38,7 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -51,7 +53,9 @@ class _MyAppState extends State<MyApp> {
         ),
       ),
       home: Scaffold(
-        appBar: AppBar(
+        appBar: _selectedIndex == 1
+            ? null
+            : AppBar(
           title: Text(MyApp._pageNameOptions[_selectedIndex]),
           centerTitle: true,
           bottom: PreferredSize(
