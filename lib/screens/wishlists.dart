@@ -218,7 +218,7 @@ class _WishlistItemState extends State<WishlistItem> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ChatScreen(wishlistId: widget._wishlist.id, wishlistName: widget._wishlist.name),
+                    builder: (context) => ChatScreen(wishlistId: widget._wishlist.id, wishlistName: widget._wishlist.name, openedFromBottomBar: false),
                   ),
                 );
               },
