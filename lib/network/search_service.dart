@@ -33,7 +33,7 @@ class SearchService {
   }
 
   bool checkerForSuggestion() {
-    return type == SearchEventType.product;
+    return type == SearchEventType.suggestion;
   }
 
   String? wishlistId;
