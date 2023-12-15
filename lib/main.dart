@@ -107,36 +107,3 @@ class _MyAppState extends State<MyApp> {
     );
   }
 }
-
-
-
-
-
-// Use to seed wishlists for new user
-// final ApiClient client = ApiClient();
-//
-// const String startPersonalWishlistMutations = r'''
-//   mutation startPersonalWishlist($dto: WishlistCreateDtoInput!) {
-//   startPersonalWishlist(dto: $dto) {
-//     createdById, id, name, type
-//   }
-// }
-// ''';
-//
-// MutationOptions mutationOptions = MutationOptions(
-//     document: gql(startPersonalWishlistMutations),
-//     variables: const <String, dynamic>{
-//       'dto': {
-//         'firstMessageText': 'Gaming mechanical keyboard',
-//         'type': 'Product'
-//       },
-//     });
-//
-// var client = ApiClient();
-// // for (var i = 0; i < 5; i++) {
-// //   client
-// //       .mutate(mutationOptions)
-// //       .then((result) => print(jsonEncode(result)));
-// //   sleep(Duration(milliseconds: 100));
-// // }
-//

@@ -22,6 +22,8 @@ SearchEventType type = SearchEventType.message;
 class SearchService {
   final ApiClient client = ApiClient();
 
+  List<String> products = [];
+
   late final _sseController = StreamController<ServerSentEvent>();
 
   Stream<ServerSentEvent> get sseStream => _sseController.stream;
@@ -92,6 +94,11 @@ class SearchService {
 
         final event = ServerSentEvent(chunk.event, cleanedMessage);
         type = chunk.event;
+        if(type == SearchEventType.product) {
+          String pattern = r'[\\\"]';
+          String product = event.data.replaceAll(RegExp(pattern), '');
+          products.add(product);
+        }
         _sseController.add(event);
       }
     }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:logger/logger.dart';
 import 'package:shopping_assistant_mobile_client/network/search_service.dart';
+import 'package:shopping_assistant_mobile_client/screens/cards.dart';
 
 class Message {
   final String text;
@@ -23,41 +24,30 @@ class MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Align(
-      alignment: isOutgoing ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.all(8.0),
-        padding: const EdgeInsets.all(16.0),
-        constraints: BoxConstraints(
-          maxWidth: 300.0,
-        ),
-        decoration: BoxDecoration(
-          color: isOutgoing ? Colors.blue : Colors.grey[200],
-          borderRadius: BorderRadius.circular(10.0),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
+        alignment: isOutgoing ? Alignment.centerRight : Alignment.centerLeft,
+        child: Container(
+          margin: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(16.0),
+          constraints: BoxConstraints(
+            maxWidth: 300.0,
+          ),
+          decoration: BoxDecoration(
+            color: isOutgoing ? Colors.blue : Colors.grey[200],
+            borderRadius: BorderRadius.circular(10.0),
+          ),
+          child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+              Text(
               message.trim(),
-              style: TextStyle(color: isOutgoing ? Colors.white : Colors.black,
-                  fontSize: 18.0
-              ),
-            ),
-            if (isProduct)
-              ElevatedButton(
-                onPressed: () {
-                  print('View Product button pressed');
-                },
-                style: ElevatedButton.styleFrom(
-                    primary: Colors.indigo,
-                    onPrimary: Colors.white,
-                    minimumSize: Size(300, 50)
-                ),
-                child: Text('View Product'),
-              ),
-          ],
+          style: TextStyle(
+            color: isOutgoing ? Colors.white : Colors.black,
+            fontSize: 18.0,
+          ),
         ),
-      ),
+      ],
+    ),
+    ),
     );
   }
 }
@@ -151,6 +141,7 @@ class ChatScreenState extends State<ChatScreen> {
     if (wishlistName != null) {
       setState(() {
         appBarTitle = Text(wishlistName, style: TextStyle(fontSize: 18.0));
+        this.widget.wishlistName = wishlistName;
       });
     }
   }
@@ -181,6 +172,14 @@ class ChatScreenState extends State<ChatScreen> {
     _scrollToBottom();
 
     setState(() {
+      if(_searchService.checkerForProduct()){
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Cards(wishlistName: this.widget.wishlistName, products: this._searchService.products,),
+          ),
+        );
+      }
       isWaitingForResponse = false;
     });
   }
