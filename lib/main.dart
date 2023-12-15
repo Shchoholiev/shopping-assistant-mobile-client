@@ -18,7 +18,7 @@ class MyApp extends StatefulWidget {
 
   static List<Widget> _widgetOptions = <Widget>[
     WishlistsScreen(),
-    ChatScreen(wishlistId: '', wishlistName: 'New Chat',),
+    ChatScreen(wishlistId: '', wishlistName: 'New Chat', openedFromBottomBar: true),
     Text(''),
   ];
 

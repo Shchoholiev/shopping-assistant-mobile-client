@@ -65,8 +65,9 @@ class MessageBubble extends StatelessWidget {
 class ChatScreen extends StatefulWidget {
   String wishlistId;
   String wishlistName;
+  bool openedFromBottomBar; 
 
-  ChatScreen({Key? key, required this.wishlistId, required this.wishlistName}) : super(key: key);
+  ChatScreen({Key? key, required this.wishlistId, required this.wishlistName, required this.openedFromBottomBar}) : super(key: key);
 
   @override
   State createState() => ChatScreenState();
@@ -74,19 +75,23 @@ class ChatScreen extends StatefulWidget {
 
 class ChatScreenState extends State<ChatScreen> {
   var logger = Logger();
-  final SearchService _searchService = SearchService();
+  SearchService _searchService = SearchService();
   List<Message> messages = [];
+  TextEditingController _messageController = TextEditingController();
   List<String> suggestions = [];
-  final TextEditingController _messageController = TextEditingController();
+  bool showBackButton = false;
   bool buttonsVisible = true;
   bool isSendButtonEnabled = false;
   bool showButtonsContainer = true;
   bool isWaitingForResponse = false;
-  final ScrollController _scrollController = ScrollController();
+  ScrollController _scrollController = ScrollController();
   late Widget appBarTitle;
 
   void initState() {
     super.initState();
+    if (widget.openedFromBottomBar) {
+      _resetState();
+    }
     appBarTitle = Text('New Chat', style: TextStyle(fontSize: 18.0));
     _searchService.sseStream.listen((event) {
       _handleSSEMessage(Message(text: '${event.data}'));
@@ -95,9 +100,25 @@ class ChatScreenState extends State<ChatScreen> {
     if(!widget.wishlistId.isEmpty)
     {
       _loadPreviousMessages();
+      showBackButton = true;
       showButtonsContainer = false;
       buttonsVisible = false;
     }
+  }
+
+  void _resetState() {
+    widget.wishlistId = '';
+    widget.wishlistName = '';
+    _searchService = SearchService();
+    messages = [];
+    _messageController = TextEditingController();
+    showBackButton = false;
+    buttonsVisible = true;
+    isSendButtonEnabled = false;
+    showButtonsContainer = true;
+    isWaitingForResponse = false;
+    _scrollController = ScrollController();
+    appBarTitle = const Text('New Chat', style: TextStyle(fontSize: 18.0));
   }
 
   Future<void> _loadPreviousMessages() async {
@@ -299,12 +320,14 @@ class ChatScreenState extends State<ChatScreen> {
       appBar: AppBar(
         title: appBarTitle,
         centerTitle: true,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () {
-            print('Back button pressed');
-          },
-        ),
+        leading: showBackButton
+            ? IconButton(
+                icon: Icon(Icons.arrow_back),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              )
+            : null,
       ),
       body: Column(
         children: <Widget>[
