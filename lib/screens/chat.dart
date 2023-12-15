@@ -128,25 +128,30 @@ class ChatScreenState extends State<ChatScreen> {
       final lastMessage = messages.isNotEmpty ? messages.last : null;
       message.isProduct = _searchService.checkerForProduct();
       message.isSuggestion = _searchService.checkerForSuggestion();
-      bool checker = false;
-      logger.d("Product status: ${message.isProduct}");
-      logger.d("Suggestion status: ${message.isSuggestion}");
       if(message.isSuggestion){
         suggestions.add(message.text);
       }
-      if (lastMessage != null && lastMessage.role != "User" && message.role != "User" && !message.isSuggestion && message.text != "/n") {
+      logger.d("Product status: ${message.isProduct}");
+      logger.d("Suggestion status: ${message.isSuggestion}");
+      logger.d("Message text: ${message.text}");
+      if (lastMessage != null && lastMessage.role != "User" && message.role != "User" && !message.isSuggestion) {
+        String fullMessageText = lastMessage.text + message.text;
+        fullMessageText = fullMessageText.replaceAll("\\n", "");
+        logger.d("fullMessageText: $fullMessageText");
         final updatedMessage = Message(
-            text: "${lastMessage.text}${message.text}",
+            text: fullMessageText,
             role: "Application",
             isProduct: message.isProduct);
         messages.removeLast();
         messages.add(updatedMessage);
       } else {
-        if(!message.isSuggestion && message.text != "/n"){
-          messages.add(message);
+        String messageText = message.text.replaceAll("\\n", "");
+        if (!message.isSuggestion) {
+          messages.add(Message(text: messageText, role: message.role, isProduct: message.isProduct, isSuggestion: message.isSuggestion));
         }
       }
     });
+
     setState(() {
       isWaitingForResponse = false;
     });
@@ -209,6 +214,7 @@ class ChatScreenState extends State<ChatScreen> {
     }
 
     _messageController.clear();
+    suggestions.clear();
     _scrollToBottom();
   }
 
