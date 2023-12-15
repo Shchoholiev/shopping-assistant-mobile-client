@@ -76,6 +76,7 @@ class ChatScreenState extends State<ChatScreen> {
   var logger = Logger();
   final SearchService _searchService = SearchService();
   List<Message> messages = [];
+  List<String> suggestions = [];
   final TextEditingController _messageController = TextEditingController();
   bool buttonsVisible = true;
   bool isSendButtonEnabled = false;
@@ -129,7 +130,11 @@ class ChatScreenState extends State<ChatScreen> {
       message.isSuggestion = _searchService.checkerForSuggestion();
       bool checker = false;
       logger.d("Product status: ${message.isProduct}");
-      if (lastMessage != null && lastMessage.role != "User" && message.role != "User") {
+      logger.d("Suggestion status: ${message.isSuggestion}");
+      if(message.isSuggestion){
+        suggestions.add(message.text);
+      }
+      if (lastMessage != null && lastMessage.role != "User" && message.role != "User" && !message.isSuggestion && message.text != "/n") {
         final updatedMessage = Message(
             text: "${lastMessage.text}${message.text}",
             role: "Application",
@@ -137,7 +142,9 @@ class ChatScreenState extends State<ChatScreen> {
         messages.removeLast();
         messages.add(updatedMessage);
       } else {
-        messages.add(message);
+        if(!message.isSuggestion && message.text != "/n"){
+          messages.add(message);
+        }
       }
     });
     setState(() {
@@ -205,6 +212,13 @@ class ChatScreenState extends State<ChatScreen> {
     _scrollToBottom();
   }
 
+  void _handleSuggestion(String suggestion) {
+    _messageController.text = suggestion;
+    _sendMessage();
+    suggestions.clear();
+  }
+
+
   void _scrollToBottom() {
     _scrollController.animateTo(
       _scrollController.position.maxScrollExtent,
@@ -230,6 +244,46 @@ class ChatScreenState extends State<ChatScreen> {
           ],
         );
       },
+    );
+  }
+
+  Widget _generateSuggestionButtons() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Text(
+            'Several possible options',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
+          ),
+        ),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: suggestions.map((suggestion) {
+              return Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                child: ElevatedButton(
+                  onPressed: () {
+                    _handleSuggestion(suggestion);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 30, vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    primary: Colors.white,
+                    onPrimary: Colors.blue,
+                    side: BorderSide(color: Colors.blue, width: 2.0),
+                  ),
+                  child: Text(suggestion, style: TextStyle(color: Colors.black)),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
     );
   }
 
@@ -366,24 +420,8 @@ class ChatScreenState extends State<ChatScreen> {
               color: Colors.blue,
               size: 25.0,
             ),
-          if (messages.any((message) => message.isSuggestion))
-            Container(
-              padding: EdgeInsets.all(8.0),
-              color: Colors.grey[300],
-              child: Row(
-                children: [
-                  Icon(Icons.lightbulb),
-                  SizedBox(width: 8.0),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: messages
-                        .where((message) => message.isSuggestion)
-                        .map((message) => Text(message.text))
-                        .toList(),
-                  ),
-                ],
-              ),
-            ),
+          if (suggestions.isNotEmpty)
+            _generateSuggestionButtons(),
           Container(
             margin: const EdgeInsets.all(8.0),
             child: Row(
@@ -403,6 +441,7 @@ class ChatScreenState extends State<ChatScreen> {
                         contentPadding: EdgeInsets.symmetric(vertical: 20.0),
                       ),
                     ),
+
                   ),
                 ),
                 IconButton(
