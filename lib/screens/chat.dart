@@ -65,8 +65,9 @@ class MessageBubble extends StatelessWidget {
 class ChatScreen extends StatefulWidget {
   String wishlistId;
   String wishlistName;
+  bool openedFromBottomBar; 
 
-  ChatScreen({Key? key, required this.wishlistId, required this.wishlistName}) : super(key: key);
+  ChatScreen({Key? key, required this.wishlistId, required this.wishlistName, required this.openedFromBottomBar}) : super(key: key);
 
   @override
   State createState() => ChatScreenState();
@@ -74,18 +75,23 @@ class ChatScreen extends StatefulWidget {
 
 class ChatScreenState extends State<ChatScreen> {
   var logger = Logger();
-  final SearchService _searchService = SearchService();
+  SearchService _searchService = SearchService();
   List<Message> messages = [];
-  final TextEditingController _messageController = TextEditingController();
+  TextEditingController _messageController = TextEditingController();
+  List<String> suggestions = [];
+  bool showBackButton = false;
   bool buttonsVisible = true;
   bool isSendButtonEnabled = false;
   bool showButtonsContainer = true;
   bool isWaitingForResponse = false;
-  final ScrollController _scrollController = ScrollController();
+  ScrollController _scrollController = ScrollController();
   late Widget appBarTitle;
 
   void initState() {
     super.initState();
+    if (widget.openedFromBottomBar) {
+      _resetState();
+    }
     appBarTitle = Text('New Chat', style: TextStyle(fontSize: 18.0));
     _searchService.sseStream.listen((event) {
       _handleSSEMessage(Message(text: '${event.data}'));
@@ -94,9 +100,25 @@ class ChatScreenState extends State<ChatScreen> {
     if(!widget.wishlistId.isEmpty)
     {
       _loadPreviousMessages();
+      showBackButton = true;
       showButtonsContainer = false;
       buttonsVisible = false;
     }
+  }
+
+  void _resetState() {
+    widget.wishlistId = '';
+    widget.wishlistName = '';
+    _searchService = SearchService();
+    messages = [];
+    _messageController = TextEditingController();
+    showBackButton = false;
+    buttonsVisible = true;
+    isSendButtonEnabled = false;
+    showButtonsContainer = true;
+    isWaitingForResponse = false;
+    _scrollController = ScrollController();
+    appBarTitle = const Text('New Chat', style: TextStyle(fontSize: 18.0));
   }
 
   Future<void> _loadPreviousMessages() async {
@@ -127,19 +149,30 @@ class ChatScreenState extends State<ChatScreen> {
       final lastMessage = messages.isNotEmpty ? messages.last : null;
       message.isProduct = _searchService.checkerForProduct();
       message.isSuggestion = _searchService.checkerForSuggestion();
-      bool checker = false;
+      if(message.isSuggestion){
+        suggestions.add(message.text);
+      }
       logger.d("Product status: ${message.isProduct}");
-      if (lastMessage != null && lastMessage.role != "User" && message.role != "User") {
+      logger.d("Suggestion status: ${message.isSuggestion}");
+      logger.d("Message text: ${message.text}");
+      if (lastMessage != null && lastMessage.role != "User" && message.role != "User" && !message.isSuggestion) {
+        String fullMessageText = lastMessage.text + message.text;
+        fullMessageText = fullMessageText.replaceAll("\\n", "");
+        logger.d("fullMessageText: $fullMessageText");
         final updatedMessage = Message(
-            text: "${lastMessage.text}${message.text}",
+            text: fullMessageText,
             role: "Application",
             isProduct: message.isProduct);
         messages.removeLast();
         messages.add(updatedMessage);
       } else {
-        messages.add(message);
+        String messageText = message.text.replaceAll("\\n", "");
+        if (!message.isSuggestion) {
+          messages.add(Message(text: messageText, role: message.role, isProduct: message.isProduct, isSuggestion: message.isSuggestion));
+        }
       }
     });
+
     setState(() {
       isWaitingForResponse = false;
     });
@@ -202,8 +235,16 @@ class ChatScreenState extends State<ChatScreen> {
     }
 
     _messageController.clear();
+    suggestions.clear();
     _scrollToBottom();
   }
+
+  void _handleSuggestion(String suggestion) {
+    _messageController.text = suggestion;
+    _sendMessage();
+    suggestions.clear();
+  }
+
 
   void _scrollToBottom() {
     _scrollController.animateTo(
@@ -233,18 +274,60 @@ class ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  Widget _generateSuggestionButtons() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Text(
+            'Several possible options',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
+          ),
+        ),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: suggestions.map((suggestion) {
+              return Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                child: ElevatedButton(
+                  onPressed: () {
+                    _handleSuggestion(suggestion);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 30, vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    primary: Colors.white,
+                    onPrimary: Colors.blue,
+                    side: BorderSide(color: Colors.blue, width: 2.0),
+                  ),
+                  child: Text(suggestion, style: TextStyle(color: Colors.black)),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: appBarTitle,
         centerTitle: true,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () {
-            print('Back button pressed');
-          },
-        ),
+        leading: showBackButton
+            ? IconButton(
+                icon: Icon(Icons.arrow_back),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              )
+            : null,
       ),
       body: Column(
         children: <Widget>[
@@ -366,24 +449,8 @@ class ChatScreenState extends State<ChatScreen> {
               color: Colors.blue,
               size: 25.0,
             ),
-          if (messages.any((message) => message.isSuggestion))
-            Container(
-              padding: EdgeInsets.all(8.0),
-              color: Colors.grey[300],
-              child: Row(
-                children: [
-                  Icon(Icons.lightbulb),
-                  SizedBox(width: 8.0),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: messages
-                        .where((message) => message.isSuggestion)
-                        .map((message) => Text(message.text))
-                        .toList(),
-                  ),
-                ],
-              ),
-            ),
+          if (suggestions.isNotEmpty)
+            _generateSuggestionButtons(),
           Container(
             margin: const EdgeInsets.all(8.0),
             child: Row(
@@ -403,6 +470,7 @@ class ChatScreenState extends State<ChatScreen> {
                         contentPadding: EdgeInsets.symmetric(vertical: 20.0),
                       ),
                     ),
+
                   ),
                 ),
                 IconButton(
