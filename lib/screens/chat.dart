@@ -206,10 +206,11 @@ class ChatScreenState extends State<ChatScreen> {
 
     setState(() {
       if(_searchService.checkerForProduct()){
+        messages.removeLast();
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => Cards(wishlistName: this.widget.wishlistName, products: this._searchService.products,),
+            builder: (context) => Cards(wishlistName: this.widget.wishlistName, inputProducts: this._searchService.products, wishlistId: this.widget.wishlistId,),
           ),
         );
       }

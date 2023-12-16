@@ -74,6 +74,14 @@ flutter:
     - assets/icons/wishlists.svg
     - assets/icons/start-new-search.svg
     - assets/icons/settings.svg
+    - assets/icons/heart.svg
+    - assets/icons/x.svg
+    - assets/icons/exit-cards.svg
+    - assets/icons/back.svg
+    - assets/icons/add-products.svg
+    - assets/icons/star.svg
+    - assets/icons/half-star.svg
+    - assets/icons/empty-star.svg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
