@@ -62,7 +62,7 @@ class SearchService {
   }
 
   Future<String> startPersonalWishlist(String message) async {
-
+    logger.d('WISHLIST ID: $wishlistId');
     if (wishlistId == null) {
       final options = MutationOptions(
         document: gql(startPersonalWishlistMutations),
@@ -81,7 +81,7 @@ class SearchService {
   }
 
   Future<void> sendMessages(String message) async {
-
+    logger.d('WISHLIST ID: $wishlistId');
     if (wishlistId != null) {
       final sseStream = client.getServerSentEventStream(
         'api/productssearch/search/$wishlistId',
