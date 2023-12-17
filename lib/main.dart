@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shopping_assistant_mobile_client/screens/chat.dart';
+import 'package:shopping_assistant_mobile_client/screens/settings.dart';
 import 'package:shopping_assistant_mobile_client/screens/wishlists.dart';
 
 void main() {
@@ -19,7 +20,7 @@ class MyApp extends StatefulWidget {
   static List<Widget> _widgetOptions = <Widget>[
     WishlistsScreen(),
     ChatScreen(wishlistId: '', wishlistName: 'New Chat', openedFromBottomBar: true),
-    Text(''),
+    SettingsScreen(),
   ];
 
   static const Color _selectedColor = Color.fromRGBO(36, 36, 36, 1);
@@ -29,7 +30,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  int _selectedIndex = 0;
+  int _selectedIndex = 1;
 
   void _onItemTapped(int index) {
     setState(() {
