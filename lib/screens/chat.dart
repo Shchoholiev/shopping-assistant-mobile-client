@@ -114,6 +114,7 @@ class ChatScreenState extends State<ChatScreen> {
   Future<void> _loadPreviousMessages() async {
     final pageNumber = 1;
     final pageSize = 200;
+    logger.d('WISH LIST ID: $widget.wishlistId');
     appBarTitle = Text(widget.wishlistName, style: TextStyle(fontSize: 18.0));
     try {
       final previousMessages = await _searchService.getMessagesFromPersonalWishlist(widget.wishlistId, pageNumber, pageSize);
@@ -220,7 +221,7 @@ class ChatScreenState extends State<ChatScreen> {
 
   void _sendMessage() {
     final message = _messageController.text;
-
+    logger.d('WISH LIST ID: $widget.wishlistId');
     if (widget.wishlistId.isEmpty) {
       setState(() {
         messages.add(Message(text: "What are you looking for?", role: "Application"));
@@ -231,6 +232,7 @@ class ChatScreenState extends State<ChatScreen> {
       setState(() {
         messages.add(Message(text: message, role: "User"));
       });
+      _searchService.wishlistId = widget.wishlistId.toString();
       _sendMessageToAPI(message);
     }
 
