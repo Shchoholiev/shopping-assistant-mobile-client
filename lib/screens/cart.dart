@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:graphql/client.dart';
@@ -177,22 +178,10 @@ class CartItem extends StatelessWidget{
           Container(
             width: 100,
             alignment: Alignment.center,
-            child: Image.network(
-              _product.imageUrls[0],
-              loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
-                if (loadingProgress == null) return child;
-                return Center(
-                  child: CircularProgressIndicator(
-                    value: loadingProgress.expectedTotalBytes != null
-                        ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                        : null,
-                  ),
-                );
-              },
-              errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
-                // Повертає зображення за замовчуванням у випадку помилки
-                return Image.asset('../assets/img/default-white.png');
-              },
+            child: CachedNetworkImage(
+              imageUrl: _product.imageUrls[0],
+              placeholder: (context, url) => CircularProgressIndicator(),
+              errorWidget: (context, url, error) => Image.asset('../assets/img/default-white.png'),
             ),
           ),
           SizedBox(width: 20),
