@@ -177,7 +177,23 @@ class CartItem extends StatelessWidget{
           Container(
             width: 100,
             alignment: Alignment.center,
-            child: Image(image: NetworkImage(_product.imageUrls[0]),),
+            child: Image.network(
+              _product.imageUrls[0],
+              loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Center(
+                  child: CircularProgressIndicator(
+                    value: loadingProgress.expectedTotalBytes != null
+                        ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                        : null,
+                  ),
+                );
+              },
+              errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
+                // Повертає зображення за замовчуванням у випадку помилки
+                return Image.asset('../assets/img/default-white.png');
+              },
+            ),
           ),
           SizedBox(width: 20),
           Expanded(
