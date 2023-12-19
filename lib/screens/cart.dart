@@ -216,7 +216,7 @@ class CartItem extends StatelessWidget{
                         backgroundColor: Colors.blue,
                         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       ),
-                      icon: SvgPicture.asset("../assets/icons/amazon.svg", height: 15),
+                      icon: SvgPicture.asset("assets/icons/amazon.svg", height: 15),
                       label: Text(""),
                     ),
                   )
