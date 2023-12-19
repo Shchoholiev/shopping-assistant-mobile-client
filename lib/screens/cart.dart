@@ -181,7 +181,7 @@ class CartItem extends StatelessWidget{
             child: CachedNetworkImage(
               imageUrl: _product.imageUrls[0],
               placeholder: (context, url) => CircularProgressIndicator(),
-              errorWidget: (context, url, error) => Image.asset('../assets/img/default-white.png'),
+              errorWidget: (context, url, error) => Container(color: Colors.white,),
             ),
           ),
           SizedBox(width: 20),
