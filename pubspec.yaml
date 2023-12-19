@@ -83,6 +83,7 @@ flutter:
     - assets/icons/star.svg
     - assets/icons/half-star.svg
     - assets/icons/empty-star.svg
+    - assets/icons/amazon.svg
     - assets/img/default-white.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
