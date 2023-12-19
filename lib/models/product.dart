@@ -1,4 +1,4 @@
-import 'dart:ffi';
+//import 'dart:ffi';
 
 class Product {
     Product({
@@ -25,9 +25,9 @@ class Product {
         : id = json['id'] as String,
           name = json['name'] as String,
           url = json['url'] as String,
-          imageUrls = json['imageUrls'] as List<String>,
-          rating = json['rating'] as double,
-          price = json['name'] as double,
-            description = json['description'] as String,
-            wasOpened = json['wasOpened'] as bool;
+          imageUrls = (json['imageUrls'] is Null) ? [''] : json['imageUrls'] as List<String>,
+          rating = (json['rating'] is int) ? (json['rating'] as int).toDouble() : json['rating'] as double,
+          price = (json['price'] is int) ? (json['price'] as int).toDouble() : json['price'] as double,
+            description = (json['description'] is Null) ? '' : json['description'] as String,
+            wasOpened = (json['wasOpened'] is Null) ? false : json['wasOpened'] as bool;
 }

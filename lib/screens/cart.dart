@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:graphql/client.dart';
@@ -177,7 +178,11 @@ class CartItem extends StatelessWidget{
           Container(
             width: 100,
             alignment: Alignment.center,
-            child: Image(image: NetworkImage(_product.imageUrls[0]),),
+            child: CachedNetworkImage(
+              imageUrl: _product.imageUrls[0],
+              placeholder: (context, url) => CircularProgressIndicator(),
+              errorWidget: (context, url, error) => Container(color: Colors.white,),
+            ),
           ),
           SizedBox(width: 20),
           Expanded(
