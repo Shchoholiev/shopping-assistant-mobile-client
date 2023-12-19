@@ -139,8 +139,8 @@ class _CardsState extends State<Cards> {
                       height: 300,
                       decoration: BoxDecoration(
                         image: DecorationImage(
-                          image: AssetImage('assets/images/product_image_placeholder.jpg'), // Replace with your image path
-                          fit: BoxFit.cover,
+                          image: AssetImage('assets/img/default-white.png'), // Replace with your image path
+                          fit: BoxFit.scaleDown,
                         ),
                       ),
                     ),
